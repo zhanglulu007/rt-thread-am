@@ -8,7 +8,15 @@ NAME = rtthread
 SRCS = $(shell find src -name "*.c")
 CFLAGS += -DHAVE_CCONFIG_H -D__RTTHREAD__
 CFLAGS += -Wno-nonnull-compare
-LDFLAGS += -T extra.ld
+
+SOC ?= 0
+ifeq ($(SOC),1)
+	EXTRA_LD := extra-ysyxsoc.ld
+else
+	EXTRA_LD := extra.ld
+endif
+	
+LDFLAGS += -T $(EXTRA_LD)
 -include $(FILE_MK)
 -include $(AM_APPS_MK)
 include $(AM_HOME)/Makefile
