@@ -32,14 +32,28 @@ static rt_err_t _uart_control(struct rt_serial_device *serial, int cmd, void *ar
   return (RT_EOK);
 }
 
+static bool _uart_am_io_available(void) {
+  static int8_t flag = -1;
+  if (flag < 0) {
+    flag = io_read(AM_UART_CONFIG).present ? 1 : 0;
+  }
+  return flag == 1;
+}
+
 static int _uart_putc(struct rt_serial_device *serial, char c) {
-  io_write(AM_UART_TX, .data = c);
+  if (_uart_am_io_available()) {
+    io_write(AM_UART_TX, .data = c);
+  } else {
+    putch(c);
+  }
   return 1;
 }
 
 static int _uart_getc(struct rt_serial_device *serial) {
   static const char *p = "help\ndate\nversion\nfree\nps\npwd\nls\nmemtrace\nmemcheck\nutest_list\n";
   if (*p != '\0') { return *(p ++); }
+
+  if (!_uart_am_io_available()) { return -1; }
 
   char ch = io_read(AM_UART_RX).data;
   return (ch != 0xFF) ? (int)(unsigned char)ch : -1;
